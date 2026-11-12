@@ -542,7 +542,7 @@
     setVal("rankings.core_csv", rk.core_csv); setVal("rankings.sjr_csv", rk.sjr_csv);
     const nval = Object.keys(c.validations || {}).length;
     $("#cfg-validations").textContent = `Per-paper checks: ${nval} (set them in a paper's details: "Mark difference as checked", "Set rank by hand").`;
-    for (const k of ["version_text", "license_text", "repository_name", "assets_dir"]) setVal("cover." + k, (c.cover || {})[k]);
+    for (const k of ["version_text", "license_text", "repository_name", "assets_dir", "ieee_notice"]) setVal("cover." + k, (c.cover || {})[k]);
     setVal("dashboard.columns", c.dashboard.columns.join(", "));
     setVal("dashboard.default_filters", lines(c.dashboard.default_filters));
     $("#cfg-valid-cols").textContent = cfgMeta.valid_columns.join(", ");
@@ -586,7 +586,8 @@
         dashboard: { host: el["dashboard.host"].value.trim() || "127.0.0.1", port: Number(el["dashboard.port"].value) || 8000,
           columns: csv(el["dashboard.columns"].value), default_filters: parseLines(el["dashboard.default_filters"].value, false) },
         cover: { version_text: el["cover.version_text"].value.trim(), license_text: el["cover.license_text"].value.trim(),
-          repository_name: el["cover.repository_name"].value.trim(), assets_dir: el["cover.assets_dir"].value.trim() },
+          repository_name: el["cover.repository_name"].value.trim(), assets_dir: el["cover.assets_dir"].value.trim(),
+          ieee_notice: el["cover.ieee_notice"].value.trim() },
         pdf_priority: csv(el.pdf_priority.value),
         rate_limits: rate,
         cache_dir: el.cache_dir.value.trim() || "cache", output_dir: el.output_dir.value.trim() || "output",

@@ -12,6 +12,7 @@ Without them the page uses Helvetica and no images.
 from __future__ import annotations
 
 import io
+import re
 from html import escape
 from pathlib import Path
 
@@ -30,8 +31,17 @@ def _pages(first: str | None, last: str | None, pages: str | None) -> str:
     return f"pag. {first}" if first else ""
 
 
+def is_ieee(rec: dict, meta: dict, bib: dict) -> bool:
+    """IEEE paper: IEEE DOI prefix, or IEEE as publisher / in the venue (IRIS record or BibTeX)."""
+    if (rec.get("doi") or "").lower().startswith("10.1109/"):
+        return True
+    text = " ".join(str(x) for x in (meta.get("publisher"), bib.get("publisher"), meta.get("journal"),
+                                     meta.get("ispartofbook"), rec.get("venue")) if x)
+    return bool(re.search(r"\bIEEE\b|Institute of Electrical and Electronics Engineers", text, re.I))
+
+
 def cover_fields(rec: dict) -> dict:
-    """{reference (reportlab markup), doi, year} for a record from output/latest.json."""
+    """{reference (reportlab markup), doi, year, ieee} for a record from output/latest.json."""
     iris = (rec.get("sources") or {}).get("iris") or {}
     use_iris = iris.get("status") in ("present", "uncertain") and iris.get("title")
     meta = (iris.get("meta") or {}) if use_iris else {}
@@ -54,7 +64,8 @@ def cover_fields(rec: dict) -> dict:
         ref += f", {escape(year)}"
     if pages:
         ref += f", {escape(pages)}"
-    return {"reference": f"<b>{ref}.</b>", "doi": rec.get("doi") or "", "year": year}
+    return {"reference": f"<b>{ref}.</b>", "doi": rec.get("doi") or "", "year": year,
+            "ieee": is_ieee(rec, meta, bib)}
 
 
 def _fonts(assets: Path) -> str:
@@ -120,5 +131,11 @@ def render_cover(fields: dict, cover_cfg, repository_url: str | None) -> bytes:
              f"<a href='{escape(repository_url)}'><u>{escape(repository_url)}</u></a>", small, width - 400, 60)
     year = f"©{escape(fields['year'])}. " if fields["year"] else ""
     para(year + escape(cover_cfg.license_text), small, 60, 100)
+    if fields.get("ieee") and cover_cfg.ieee_notice:
+        notice = ParagraphStyle("cover-notice", fontName=font, fontSize=10, textColor=color, leading=13)
+        text = cover_cfg.ieee_notice.replace("{year}", fields["year"] or "").replace("©  ", "© ")
+        p = Paragraph(escape(text), style=notice, encoding="utf-8")
+        p.wrapOn(c, width - 130, height)
+        p.drawOn(c, 60, 160)  # just above the license line
     c.save()
     return buf.getvalue()

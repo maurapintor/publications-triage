@@ -144,6 +144,12 @@ class CoverConfig:
     license_text: str = ("This manuscript version is made available under the CC-BY-NC-ND 4.0 license "
                          "https://creativecommons.org/licenses/by-nc-nd/4.0/")
     repository_name: str = "UNICA IRIS"
+    # added on IEEE papers (DOI 10.1109/... or IEEE as publisher); {year} = publication year
+    ieee_notice: str = ("© {year} IEEE. Personal use of this material is permitted. Permission from IEEE must be "
+                        "obtained for all other uses, in any current or future media, including reprinting/"
+                        "republishing this material for advertising or promotional purposes, creating new "
+                        "collective works, for resale or redistribution to servers or lists, or reuse of any "
+                        "copyrighted component of this work in other works.")
 
 
 @dataclass
@@ -277,7 +283,7 @@ def _parse_cover(raw) -> CoverConfig:
     if not isinstance(raw, dict):
         raise ConfigError("'cover' must be a mapping")
     d = CoverConfig()
-    for k in ("assets_dir", "version_text", "license_text", "repository_name"):
+    for k in ("assets_dir", "version_text", "license_text", "repository_name", "ieee_notice"):
         if raw.get(k) not in (None, ""):
             setattr(d, k, str(raw[k]))
     return d

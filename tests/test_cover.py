@@ -68,3 +68,17 @@ def test_cover_endpoint(tmp_path):
     assert r.status_code == 200 and r.data.startswith(b"%PDF")
     assert r.headers["Content-Disposition"] == 'attachment; filename="cover_10.1_a.pdf"'
     assert c.get("/cover/unknown").status_code == 404
+
+
+def test_ieee_notice(tmp_path):
+    from triage.cover import is_ieee
+    ieee = {**REC, "doi": "10.1109/TIFS.2026.1", "sources": {"iris": {"status": "missing"}}, "venue": "Some Journal"}
+    f = cover_fields(ieee)
+    assert f["ieee"] is True
+    t = text_of(render_cover(f, CoverConfig(assets_dir=str(tmp_path)), None))
+    assert "© 2024 IEEE. Personal use of this material is permitted." in t and "reuse of any copyrighted" in t
+    assert not cover_fields(REC)["ieee"]
+    assert "IEEE. Personal use" not in text_of(render_cover(cover_fields(REC), CoverConfig(assets_dir=str(tmp_path)), None))
+    assert is_ieee({"doi": "10.1000/x", "venue": "2024 IEEE Symposium on Security and Privacy"}, {}, {})
+    assert is_ieee({"doi": "10.1000/x"}, {"publisher": "Institute of Electrical and Electronics Engineers Inc."}, {})
+    assert not is_ieee({"doi": "10.1000/x", "venue": "Pattern Recognition"}, {}, {"publisher": "Elsevier"})

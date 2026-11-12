@@ -55,6 +55,7 @@ projects:                             # funding projects to look for in the ackn
 #   version_text: "This is the Author's <i>accepted</i> manuscript version of the following contribution:"
 #   license_text: "This manuscript version is made available under the CC-BY-NC-ND 4.0 license https://creativecommons.org/licenses/by-nc-nd/4.0/"
 #   repository_name: UNICA IRIS
+#   ieee_notice: "© {year} IEEE. Personal use of this material is permitted. ..."   # added on IEEE papers
 #
 # validations: {}                     # per-paper checks, written by the dashboard
 #
