@@ -176,3 +176,10 @@ details.adv > summary { cursor: pointer; color: var(--accent); font-size: 13px; 
 }
 input.invalid { border-color: var(--missing); }
 .hint.err { color: var(--missing); }
+/* ---------- first start ---------- */
+#setup { max-width: 760px; margin: 24px auto; }
+.setup h2 { margin: 0 0 4px; font-size: 20px; }
+.setup label, .setup .su-block { display: block; margin: 16px 0; font-weight: 600; }
+.setup input { display: block; width: 100%; margin-top: 4px; font-weight: normal; }
+.setup .row input { flex: 1; }
+.setup .proj-row { margin-top: 6px; }

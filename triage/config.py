@@ -65,7 +65,7 @@ class UserConfig:
 class PaperListConfig:
     source: str = "orcid"  # orcid: built at each run from ORCID + Crossref (+ arXiv feed) | file
     file: str | None = None  # only for source: file (publications.json format)
-    arxiv_author_id: str | None = None  # e.g. lovelace_a_1 (arxiv.org/a/<id>): arXiv ids + arXiv-only preprints
+    arxiv_author_id: str | None = None  # arxiv.org/a/<id> author page; default: the ORCID iD (works when linked)
     exclude_titles: list[str] = field(default_factory=list)  # exact titles to skip (case-insensitive)
 
 
@@ -388,6 +388,45 @@ def load_config(path: str | Path) -> Config:
     )
 
 
+def setup_needed(path) -> str | None:
+    """Why the first-start setup page must be shown (no file, or no ORCID iD / projects yet), else None."""
+    path = Path(path)
+    if not path.exists():
+        return "no configuration yet"
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return None  # a broken file is reported as a config error, never overwritten by the setup page
+    if not isinstance(data, dict):
+        return None
+    pl = data.get("paper_list") or {}
+    if (pl.get("source") or ("file" if data.get("input_path") else "orcid")) == "orcid" \
+            and not (data.get("user") or {}).get("orcid"):
+        return "your ORCID iD is missing"
+    if not data.get("projects"):
+        return "no projects to look for yet"
+    return None
+
+
+def apply_setup(path, name, orcid, email, iris_url, projects) -> "Config":
+    """Write the first-start answers into the config file (keeping any other keys already there)."""
+    path = Path(path)
+    raw = {}
+    if path.exists():
+        try:
+            raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError:
+            raw = {}
+    raw.pop("contact_email", None)
+    raw["user"] = {**(raw.get("user") or {}), "name": name or None, "orcid": orcid, "email": email or None}
+    raw["iris"] = {**(raw.get("iris") or {}), "url": iris_url or None}
+    if not iris_url:
+        raw["iris"].pop("oai_url", None)
+    raw["projects"] = projects
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return save_config(raw, path)
+
+
 def config_to_dict(config: Config, minimal: bool = False) -> dict:
     """YAML-ready dict in reading order (inverse of load_config). minimal=True drops values equal to the
     defaults, so the saved file only holds what the user changed."""
@@ -445,7 +484,7 @@ def save_config(data: dict, path: str | Path) -> Config:
             fh.write(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
         config = load_config(tmp)
         header = ("# publications-triage settings (written by the dashboard; only values that differ from the\n"
-                  "# defaults are stored -- see README 'Set up for a new user' for every setting).\n")
+                  "# defaults are stored -- config/triage.example.yaml lists every setting with its default).\n")
         tmp.write_text(header + yaml.safe_dump(config_to_dict(config, minimal=True), sort_keys=False,
                                                allow_unicode=True), encoding="utf-8")
         load_config(tmp)

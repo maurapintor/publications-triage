@@ -9,6 +9,9 @@ from flask import Flask, Response, abort, jsonify, render_template, request, sen
 from ..citations import FORMATS, format_citations
 from ..enrich import enrich_records
 from ..rankings import VALID_RANKS
+import re
+
+from ..config import DEFAULT_IRIS_URL, apply_setup, setup_needed
 from ..config import IRIS_MODES, VALID_SOURCES, ConfigError, iris_mode, rate_limit_table, config_to_dict, load_config, save_config, valid_columns
 from ..report import load_json
 from ..sources import iris_index_path
@@ -104,7 +107,57 @@ def create_app(config_path, run_fn=None, http_factory=None) -> Flask:
 
     @app.errorhandler(ConfigError)
     def _config_error(exc):
+        reason = setup_needed(config_path)
+        if reason:
+            return jsonify(error=f"setup needed: {reason}", setup_needed=True), 409
         return jsonify(error=str(exc)), 400
+
+    # ---------- first-start setup ----------
+    def setup_http():
+        if app.config.get("SETUP_HTTP") is not None:
+            return app.config["SETUP_HTTP"]
+        from ..http import DEFAULT_OFFICIAL_HOSTS, HttpClient
+        return HttpClient(None, {"pub.orcid.org": 0.2, "default": 1.0}, "cache", official_hosts=DEFAULT_OFFICIAL_HOSTS)
+
+    @app.get("/api/setup")
+    def setup_status():
+        reason = setup_needed(config_path)
+        return jsonify(needed=bool(reason), reason=reason, path=str(config_path), default_iris_url=DEFAULT_IRIS_URL)
+
+    @app.post("/api/setup/orcid")
+    def setup_check_orcid():
+        """Body: {orcid}. Returns the name and number of works on ORCID, to confirm the iD."""
+        orcid = re.sub(r"^https?://orcid\.org/", "", ((request.get_json(silent=True) or {}).get("orcid") or "").strip())
+        if not re.fullmatch(r"\d{4}-\d{4}-\d{4}-\d{3}[\dX]", orcid):
+            return jsonify(error="an ORCID iD looks like 0000-0002-1825-0097"), 400
+        h = setup_http()
+        acc = {"Accept": "application/json"}
+        person = h.get(f"https://pub.orcid.org/v3.0/{orcid}/person", use_cache=False, headers=acc)
+        if person.status_code == 404:
+            return jsonify(error="this ORCID iD does not exist"), 404
+        if person.status_code != 200:
+            return jsonify(error=f"ORCID returned HTTP {person.status_code}"), 502
+        n = person.json().get("name") or {}
+        name = " ".join(x for x in ((n.get("given-names") or {}).get("value"), (n.get("family-name") or {}).get("value")) if x)
+        works = h.get(f"https://pub.orcid.org/v3.0/{orcid}/works", use_cache=False, headers=acc)
+        count = len(works.json().get("group", [])) if works.status_code == 200 else None
+        return jsonify(orcid=orcid, name=name or None, works=count)
+
+    @app.post("/api/setup")
+    def setup_save():
+        """Body: {name, orcid, email, iris_url, projects: [{name, aliases}]}."""
+        if jobs.running:
+            return jsonify(error="a run is in progress"), 409
+        b = request.get_json(silent=True) or {}
+        projects = [{"name": p["name"].strip(), **({"aliases": p["aliases"]} if p.get("aliases") else {})}
+                    for p in (b.get("projects") or []) if isinstance(p, dict) and (p.get("name") or "").strip()]
+        if not projects:
+            return jsonify(error="add at least one project to look for"), 400
+        if not (b.get("orcid") or "").strip():
+            return jsonify(error="your ORCID iD is needed"), 400
+        apply_setup(config_path, (b.get("name") or "").strip(), b["orcid"].strip(), (b.get("email") or "").strip(),
+                    (b.get("iris_url") or "").strip(), projects)
+        return jsonify(ok=True)
 
     @app.get("/")
     def index():

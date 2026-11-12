@@ -16,6 +16,45 @@
   </header>
 
   <main>
+    <!-- First start -->
+    <section id="setup" hidden>
+      <form id="setup-form" class="card setup">
+        <h2>Welcome! Let's set up your publications triage</h2>
+        <p class="muted">Two things are needed; everything else has sensible defaults and can be changed later in Settings.</p>
+
+        <label>1. Your ORCID iD <span class="req">required</span>
+          <span class="row">
+            <input id="su-orcid" placeholder="0000-0000-0000-0000" required>
+            <button type="button" id="su-check">Check</button>
+          </span>
+          <span class="hint">Your paper list is built from your ORCID record at every run. Find it on
+            <a href="https://orcid.org" target="_blank" rel="noopener">orcid.org</a>.</span>
+          <span id="su-orcid-msg" class="hint"></span></label>
+
+        <div class="su-block">2. Funding projects to look for in the acknowledgements <span class="req">required</span>
+          <span class="hint">Project acronyms as written in papers; add spelling variants as aliases.</span>
+          <div id="su-projects"></div>
+          <button type="button" id="su-add" class="link">+ Add project</button>
+        </div>
+
+        <details class="adv">
+          <summary>Optional: institutional repository, email</summary>
+          <label>Institutional repository (IRIS) address
+            <input id="su-iris">
+            <span class="hint">Leave the default if you are at the University of Cagliari; put your university's IRIS
+              address otherwise, or empty it if you have none (IRIS checks are skipped).</span></label>
+          <label>Email
+            <input id="su-email" type="email" placeholder="you@university.edu">
+            <span class="hint">Optional contact sent to arXiv, ORCID and Crossref (they recommend it for scripts).</span></label>
+        </details>
+
+        <div class="row">
+          <button type="submit" class="primary">Save and open the dashboard</button>
+          <span id="su-msg" class="hint err"></span>
+        </div>
+      </form>
+    </section>
+
     <!-- Papers tab -->
     <section id="tab-papers" class="tab">
       <div class="runbar card">
@@ -158,8 +197,9 @@
           <h2 class="group-title">Optional <span class="muted small">(defaults work for most people)</span></h2>
           <fieldset id="s-papers" class="card"><legend>Paper list</legend>
             <label>arXiv author id
-              <input name="paper_list.arxiv_author_id" placeholder="e.g. lovelace_a_1">
-              <span class="hint">The part after <code>arxiv.org/a/</code> on your arXiv author page. Adds arXiv ids and preprints that are not on ORCID.</span></label>
+              <input name="paper_list.arxiv_author_id" placeholder="empty = your ORCID iD">
+              <span class="hint">Your arXiv author page (<code>arxiv.org/a/&lt;id&gt;</code>) adds preprints that are not on ORCID. Leave empty to use your
+                ORCID iD (works if your ORCID is linked on arXiv); otherwise put the id, e.g. <code>lovelace_a_1</code>.</span></label>
             <label>Excluded papers (one title per line)
               <textarea name="paper_list.exclude_titles" rows="5"></textarea>
               <span class="hint">Use <i>Exclude this paper</i> in a paper's details to add it here. Delete a line to bring the

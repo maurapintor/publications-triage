@@ -504,7 +504,7 @@
   function projectRow(p = { name: "", aliases: [] }) {
     const div = document.createElement("div");
     div.className = "proj-row";
-    div.innerHTML = `<input placeholder="Project name (e.g. ELSA)" class="p-name" value="${esc(p.name)}">
+    div.innerHTML = `<input placeholder="Project name (e.g. MYPROJECT)" class="p-name" value="${esc(p.name)}">
       <input placeholder="Aliases, comma-separated (optional)" class="p-aliases" value="${esc((p.aliases || []).join(", "))}">
       <button type="button" class="link p-del" aria-label="Remove project">Remove</button>`;
     div.querySelector(".p-del").addEventListener("click", () => div.remove());
@@ -607,8 +607,52 @@
     document.querySelector(a.getAttribute("href")).scrollIntoView({ behavior: "smooth", block: "start" });
   }));
 
+  // ---------- first-start setup ----------
+  let suName = null;
+  function suProjectRow(p = { name: "", aliases: [] }) {
+    const row = projectRow(p);
+    return row;
+  }
+  $("#su-add").addEventListener("click", () => $("#su-projects").appendChild(suProjectRow()));
+  $("#su-check").addEventListener("click", async () => {
+    const msg = $("#su-orcid-msg");
+    msg.className = "hint"; msg.textContent = "Checking on ORCID…";
+    try {
+      const r = await api("POST", "/api/setup/orcid", { orcid: $("#su-orcid").value });
+      suName = r.name;
+      $("#su-orcid").value = r.orcid;
+      msg.textContent = `Found: ${r.name || "(name not public)"}${r.works != null ? `, ${r.works} works on ORCID` : ""}.`;
+    } catch (err) { msg.className = "hint err"; msg.textContent = err.message; }
+  });
+  $("#setup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const projects = [...$("#su-projects").querySelectorAll(".proj-row")].map((row) => ({
+      name: row.querySelector(".p-name").value.trim(),
+      aliases: row.querySelector(".p-aliases").value.split(",").map((x) => x.trim()).filter(Boolean),
+    })).filter((p) => p.name);
+    try {
+      await api("POST", "/api/setup", { orcid: $("#su-orcid").value.trim(), name: suName, projects,
+        iris_url: $("#su-iris").value.trim(), email: $("#su-email").value.trim() });
+      location.reload();
+    } catch (err) { $("#su-msg").textContent = err.message; }
+  });
+  async function needsSetup() {
+    let st;
+    try { st = await api("GET", "/api/setup"); } catch { return false; }
+    if (!st.needed) return false;
+    document.querySelector(".tabs").hidden = true;
+    $("#tab-papers").hidden = true; $("#tab-config").hidden = true;
+    $("#setup").hidden = false;
+    $("#su-iris").value = st.default_iris_url || "";
+    if (!$("#su-projects").children.length) $("#su-projects").appendChild(suProjectRow());
+    return true;
+  }
+
   // ---------- boot ----------
-  if (location.hash === "#config") showTab("config");
-  loadPapers().catch((err) => { $("#empty").hidden = false; $("#empty").textContent = "Could not load data: " + err.message; });
-  pollStatus();
+  needsSetup().then((setup) => {
+    if (setup) return;
+    if (location.hash === "#config") showTab("config");
+    loadPapers().catch((err) => { $("#empty").hidden = false; $("#empty").textContent = "Could not load data: " + err.message; });
+    pollStatus();
+  });
 })();

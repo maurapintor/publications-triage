@@ -161,13 +161,20 @@ def _rankings(args, http=None) -> int:
 
 
 def _serve(args, app_runner=None) -> int:
-    try:
-        config = load_config(args.config)
-    except ConfigError as exc:
-        print(f"config error: {exc}", file=sys.stderr)
-        return 2
-    host = args.host or config.dashboard.host
-    port = args.port or config.dashboard.port
+    from .config import DashboardConfig, setup_needed
+
+    reason = setup_needed(args.config)
+    if reason:
+        dash = DashboardConfig()
+        print(f"First start ({reason}): open the dashboard to set it up.")
+    else:
+        try:
+            dash = load_config(args.config).dashboard
+        except ConfigError as exc:
+            print(f"config error: {exc}", file=sys.stderr)
+            return 2
+    host = args.host or dash.host
+    port = args.port or dash.port
     if host not in LOOPBACK and not args.allow_remote:
         print(f"refusing to listen on {host}: the dashboard has no authentication. "
               "Use --allow-remote if you really mean it (e.g. inside a container).", file=sys.stderr)

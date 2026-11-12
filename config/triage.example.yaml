@@ -25,8 +25,8 @@ projects:                             # funding projects to look for in the ackn
 #   url: https://iris.unica.it        # your institution's IRIS address; null = no IRIS checks
 #
 # paper_list:
-#   arxiv_author_id: null             # the id after arxiv.org/a/ on your arXiv author page, e.g. lovelace_a_1:
-#                                     # adds arXiv ids and arXiv-only preprints
+#   arxiv_author_id: null             # your arXiv author page (arxiv.org/a/<id>), which adds arXiv-only
+#                                     # preprints; null = your ORCID iD (works if ORCID is linked on arXiv)
 #   exclude_titles: []                # titles to skip; a line also drops every title containing it
 #                                     # (filled by "Exclude this paper" in the dashboard)
 #   source: orcid                     # orcid (build the list from your ORCID at every run) | file

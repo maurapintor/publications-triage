@@ -102,3 +102,21 @@ def test_dedup_key_latex_unicode():
     assert clean_title("$\\ell_0$-norm attacks") == "ℓ0-norm attacks"
     assert _tkey("σ-zero: Optimization of ℓ0-norm") == _tkey("$\\sigma$-zero: Optimization of $\\ell_0$-norm") \
         == _tkey("\\textbackslash sigma-zero: Optimization of \\textbackslash ell\\_0-norm")
+
+
+@responses.activate
+def test_feed_defaults_to_orcid(tmp_path):
+    config, h = setup(tmp_path)
+    config.paper_list.arxiv_author_id = None
+    responses.add(responses.GET, f"https://arxiv.org/a/{ORCID}.atom2", body=FEED)
+    recs = build_paper_list(config, h)
+    assert "A Preprint Only On arXiv" in [r["title"] for r in recs]
+    assert any(c.request.url == f"https://arxiv.org/a/{ORCID}.atom2" for c in responses.calls)
+
+
+@responses.activate
+def test_no_orcid_feed_is_fine(tmp_path):
+    config, h = setup(tmp_path)
+    config.paper_list.arxiv_author_id = None
+    responses.add(responses.GET, f"https://arxiv.org/a/{ORCID}.atom2", status=404)
+    assert [r["title"] for r in build_paper_list(config, h)] == ["Robust Learning of Things"]

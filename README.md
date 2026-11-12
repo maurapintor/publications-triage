@@ -7,11 +7,11 @@ Results are shown in a local web dashboard and saved as CSV/JSON.
 ## Quick start
 
 ```bash
-cp config/triage.example.yaml config/triage.yaml   # set your ORCID iD and projects
-docker compose up -d --build                        # http://127.0.0.1:8000
+docker compose up -d --build        # then open http://127.0.0.1:8000
 ```
 
-Then press **Re-run processing**. Without Docker:
+On first start the dashboard asks for your ORCID iD and the projects to look for, and writes
+`config/triage.yaml` for you. Then press **Re-run processing**. Without Docker:
 
 ```bash
 python -m venv .venv && source .venv/bin/activate && pip install -e '.[dev]'
@@ -20,7 +20,7 @@ pubtriage serve --config config/triage.yaml
 
 ## Configuration
 
-Only two settings are required:
+The first-start page covers what is needed; to write the file by hand instead, only two settings are required:
 
 ```yaml
 user:
@@ -39,7 +39,7 @@ The ones you are most likely to change:
 |---|---|
 | `iris.url` | `https://iris.unica.it` (your university's IRIS; `null` = no IRIS checks) |
 | `user.email` | none (sent as contact to arXiv/ORCID/Crossref if set; required only by the Unpaywall source) |
-| `paper_list.arxiv_author_id` | none (the id in `arxiv.org/a/<id>`: adds arXiv-only preprints) |
+| `paper_list.arxiv_author_id` | your ORCID iD (arXiv author page `arxiv.org/a/<id>` that adds arXiv-only preprints; works if your ORCID is linked on arXiv, otherwise set e.g. `lovelace_a_1`) |
 | `paper_list.exclude_titles` | none (filled by **Exclude this paper** in the dashboard) |
 
 `config/triage.yaml`, `cache/` and `output/` are personal and git-ignored.
@@ -59,7 +59,9 @@ By default a run reuses cached PDFs and retries only the papers without one; `--
 
 - Only official APIs or pages that robots.txt allows; robots.txt is checked before each request and its
   `Crawl-delay` respected, on top of built-in per-site delays. Responses are cached.
-- **Paper list**: ORCID public API + Crossref, plus the arXiv author feed if configured.
+- **Paper list**: ORCID public API + Crossref, plus your arXiv author feed.
+- **arXiv version of each paper**: found automatically, by arXiv id when known, otherwise by title search
+  (similar title + a shared author; near misses are marked uncertain).
 - **arXiv**: the official API (`export.arxiv.org`).
 - **IRIS**: OAI-PMH, the standard interface repositories offer to programs, only for the records linked from
   your ORCID (about 1 minute); IRIS PDFs are used only when no other open-access copy exists.

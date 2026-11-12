@@ -5,7 +5,7 @@ Sources (same approach as the bib2md / ORCID pipeline, re-implemented here):
   for the BibTeX that IRIS/publishers push to ORCID (cached on disk);
 - Crossref (api.crossref.org, polite pool with mailto): authors, venue, year, type for works with a DOI
   (cached on disk);
-- optionally the arXiv author feed `arxiv.org/a/<paper_list.arxiv_author_id>` (one request per run,
+- the arXiv author feed `arxiv.org/a/<ORCID iD or paper_list.arxiv_author_id>` (one request per run,
   robots.txt checked): arXiv ids for the ORCID works, plus arXiv-only preprints missing from ORCID.
 
 The result is written to output/publications.json and has the fields load_papers() reads.
@@ -199,12 +199,15 @@ def build_paper_list(config, http, should_stop=None) -> list[dict]:
     summaries = fetch_orcid_summaries(http, orcid)
     log.info("paper list: ORCID %s has %d works", orcid, len(summaries))
     feed = []
-    if pl.arxiv_author_id:
-        try:
-            feed = fetch_arxiv_feed(http, pl.arxiv_author_id)
-            log.info("paper list: arXiv author feed %s has %d papers", pl.arxiv_author_id, len(feed))
-        except Exception as exc:  # noqa: BLE001 - the feed is optional
-            log.warning("paper list: arXiv author feed failed (%s); continuing without it", exc)
+    # arXiv serves author pages by ORCID iD (for authors who linked ORCID on arXiv), so the feed works with
+    # no extra setting; paper_list.arxiv_author_id (e.g. lovelace_a_1) overrides it.
+    feed_id = pl.arxiv_author_id or orcid
+    try:
+        feed = fetch_arxiv_feed(http, feed_id)
+        log.info("paper list: arXiv author feed %s has %d papers", feed_id, len(feed))
+    except Exception as exc:  # noqa: BLE001 - the feed is optional
+        how = "set paper_list.arxiv_author_id or link your ORCID on arXiv" if not pl.arxiv_author_id else str(exc)
+        log.info("paper list: no arXiv author feed for %s (%s); continuing without it", feed_id, how)
     feed_by_title = {_tkey(f["title"]): f for f in feed}
     used_feed: set[str] = set()
 
