@@ -126,16 +126,21 @@ def render_cover(fields: dict, cover_cfg, repository_url: str | None) -> bytes:
     if fields["doi"]:
         url = f"https://dx.doi.org/{escape(fields['doi'])}"
         para(f'<a href="{url}"><u>{url}</u></a>', big, 60, height - 550)
-    if repository_url:
-        para(f"This full text was downloaded from {escape(cover_cfg.repository_name)} "
-             f"<a href='{escape(repository_url)}'><u>{escape(repository_url)}</u></a>", small, width - 400, 60)
-    year = f"©{escape(fields['year'])}. " if fields["year"] else ""
-    para(year + escape(cover_cfg.license_text), small, 60, 100)
+    # Footer: one left-aligned block stacked upward from the bottom margin, same width and line spacing.
+    foot = ParagraphStyle("cover-foot", fontName=font, fontSize=10.5, textColor=color, leading=14)
+    items = []
     if fields.get("ieee") and cover_cfg.ieee_notice:
-        notice = ParagraphStyle("cover-notice", fontName=font, fontSize=10, textColor=color, leading=13)
-        text = cover_cfg.ieee_notice.replace("{year}", fields["year"] or "").replace("©  ", "© ")
-        p = Paragraph(escape(text), style=notice, encoding="utf-8")
-        p.wrapOn(c, width - 130, height)
-        p.drawOn(c, 60, 160)  # just above the license line
+        items.append(escape(cover_cfg.ieee_notice.replace("{year}", fields["year"] or "").replace("©  ", "© ")))
+    year = f"©{escape(fields['year'])}. " if fields["year"] else ""
+    items.append(year + escape(cover_cfg.license_text))
+    if repository_url:
+        items.append(f"This full text was downloaded from {escape(cover_cfg.repository_name)} "
+                     f"<a href='{escape(repository_url)}'><u>{escape(repository_url)}</u></a>")
+    y, gap = 50, 10
+    for text in reversed(items):
+        p = Paragraph(text, style=foot, encoding="utf-8")
+        _w, h = p.wrapOn(c, width - 120, height)
+        p.drawOn(c, 60, y)
+        y += h + gap
     c.save()
     return buf.getvalue()
