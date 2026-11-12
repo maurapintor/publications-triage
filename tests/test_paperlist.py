@@ -13,7 +13,7 @@ output_dir: {{d}}/out
 user: {{{{orcid: {ORCID}}}}}
 paper_list: {{{{arxiv_author_id: lovelace_a_1, exclude_titles: [AISec]}}}}
 sources: [arxiv]
-projects: [ELSA]
+projects: [AURORA]
 """
 WORKS = {"group": [
     {"work-summary": [{"put-code": 1, "type": "journal-article", "title": {"title": {"value": "Robust Learning of Things"}},

@@ -37,7 +37,7 @@ class Response:
 class HttpClient:
     def __init__(
         self,
-        contact_email: str,
+        contact_email: str | None,
         rate_limits: dict[str, float] | None = None,
         cache_dir: str | Path | None = None,
         official_hosts=DEFAULT_OFFICIAL_HOSTS,
@@ -47,7 +47,7 @@ class HttpClient:
         clock=time.monotonic,
         session: requests.Session | None = None,
     ):
-        self.user_agent = f"publications-triage/0.1 (mailto:{contact_email})"
+        self.user_agent = "publications-triage/0.1" + (f" (mailto:{contact_email})" if contact_email else "")
         self.rate_limits = dict(rate_limits or {})
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.official_hosts = set(official_hosts)

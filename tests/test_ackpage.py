@@ -8,7 +8,7 @@ FILLER = ["Body text that is long enough to be readable."]
 
 def _pdf(tmp_path):
     f = tmp_path / "paper.pdf"
-    f.write_bytes(make_pdf([FILLER, FILLER + ["Acknowledgements", "Funded by ELSA."], ["References"]]))
+    f.write_bytes(make_pdf([FILLER, FILLER + ["Acknowledgements", "Funded by AURORA."], ["References"]]))
     return f
 
 

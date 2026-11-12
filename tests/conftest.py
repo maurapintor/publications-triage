@@ -49,7 +49,7 @@ def make_pdf(pages: list[list[str]]) -> bytes:
 
 @pytest.fixture
 def projects():
-    return [Project("ELSA"), Project("Sec4AI4Sec"), Project("CoEvolution", ["Co-Evolution"])]
+    return [Project("AURORA"), Project("Data4AI4Data"), Project("CoDesign", ["Co-Design"])]
 
 
 @pytest.fixture

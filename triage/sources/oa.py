@@ -36,7 +36,7 @@ class OpenAlexSource(_DoiSource):
         return f"https://api.openalex.org/works/doi:{quote(doi, safe='/')}"
 
     def _params(self):
-        return {"mailto": self.email}
+        return {"mailto": self.email} if self.email else {}
 
     def _parse(self, data, paper):
         loc = data.get("best_oa_location") or {}

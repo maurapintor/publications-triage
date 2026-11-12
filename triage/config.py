@@ -28,9 +28,12 @@ class Project:
         return [self.name, *self.aliases]
 
 
+DEFAULT_IRIS_URL = "https://iris.unica.it"
+
+
 @dataclass
 class IrisConfig:
-    url: str | None = None  # the institution's IRIS address, e.g. https://iris.example.it
+    url: str | None = DEFAULT_IRIS_URL  # the institution's IRIS address; None = no IRIS
     oai_url: str | None = None  # advanced: OAI-PMH endpoint (default: <url>/oai/request)
     metadata_prefix: str = "oai_dc"
     set: str | None = None
@@ -55,7 +58,7 @@ class IrisConfig:
 class UserConfig:
     name: str | None = None
     orcid: str | None = None  # e.g. 0000-0002-1825-0097
-    email: str | None = None  # contact sent to the APIs (User-Agent, mailto=)
+    email: str | None = None  # optional contact for the APIs (User-Agent, mailto=); required only by Unpaywall
 
 
 @dataclass
@@ -147,8 +150,8 @@ def valid_columns(projects) -> list[str]:
 
 @dataclass
 class Config:
-    contact_email: str
     projects: list[Project]
+    contact_email: str | None = None
     cache_dir: str = "cache"
     output_dir: str = "output"
     sources: list[str] = field(default_factory=lambda: ["iris", "arxiv"])
@@ -313,18 +316,17 @@ def load_config(path: str | Path) -> Config:
     user_raw = data.get("user") or {}
     if not isinstance(user_raw, dict):
         raise ConfigError("'user' must be a mapping with name, orcid, email")
-    email = str(user_raw.get("email") or data.get("contact_email") or "").strip()
-    if not email:
-        raise ConfigError("missing required config key: user.email (contact_email)")
-    if "@" not in email:
-        raise ConfigError("user.email (contact_email) must be an email address")
+    email = str(user_raw.get("email") or data.get("contact_email") or "").strip() or None
+    if email and "@" not in email:
+        raise ConfigError("user.email must be an email address")
     if not data.get("projects"):
         raise ConfigError("missing required config key: projects")
 
     iris_raw = data.get("iris") or {}
     if not isinstance(iris_raw, dict):
         raise ConfigError("'iris' must be a mapping")
-    has_iris = bool(iris_raw.get("url") or iris_raw.get("oai_url") or iris_raw.get("export_path"))
+    iris_url = iris_raw["url"] if "url" in iris_raw else (None if iris_raw.get("oai_url") else DEFAULT_IRIS_URL)
+    has_iris = bool(iris_url or iris_raw.get("oai_url") or iris_raw.get("export_path"))
     sources = list(data.get("sources") or (["iris", "arxiv"] if has_iris else ["arxiv"]))
     bad = [s for s in sources if s not in VALID_SOURCES]
     if bad:
@@ -339,7 +341,7 @@ def load_config(path: str | Path) -> Config:
         raise ConfigError("rate_limits must map host -> non-negative seconds")
 
     iris = IrisConfig(
-        url=str(iris_raw["url"]).strip() if iris_raw.get("url") else None,
+        url=str(iris_url).strip() if iris_url else None,
         oai_url=iris_raw.get("oai_url"),
         metadata_prefix=iris_raw.get("metadata_prefix", "oai_dc"),
         set=iris_raw.get("set"),
@@ -362,6 +364,8 @@ def load_config(path: str | Path) -> Config:
     user = UserConfig(name=str(user_raw.get("name") or "").strip() or None, orcid=orcid, email=email)
     if iris.mode == "orcid" and not orcid:
         raise ConfigError("iris.mode 'orcid' needs user.orcid")
+    if "unpaywall" in sources and not email:
+        raise ConfigError("the Unpaywall source needs your email (user.email): Unpaywall requires one")
     if "iris" in sources and not (iris.endpoint or iris.export_path):
         raise ConfigError("source 'iris' is enabled but iris.url (your institution's IRIS address) is not set")
 
@@ -423,6 +427,8 @@ def config_to_dict(config: Config, minimal: bool = False) -> dict:
         if val == default or val in ({}, None):
             out.pop(key)
     out["user"] = {k: v for k, v in user.items() if v}
+    if config.iris.url is None and not config.iris.oai_url:
+        out.setdefault("iris", {})["url"] = None  # IRIS switched off: must not fall back to the default
     return out
 
 

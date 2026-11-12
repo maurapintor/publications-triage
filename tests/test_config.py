@@ -9,9 +9,9 @@ input_path: p.json
 contact_email: a@b.org
 iris: {oai_url: "https://iris.example/oai"}
 projects:
-  - name: ELSA
-  - {name: CoEvolution, aliases: [Co-Evolution]}
-  - Sec4AI4Sec
+  - name: AURORA
+  - {name: CoDesign, aliases: [Co-Design]}
+  - Data4AI4Data
 """
 
 
@@ -23,8 +23,8 @@ def write(tmp_path, text):
 
 def test_valid_loads(tmp_path):
     c = load_config(write(tmp_path, VALID))
-    assert [p.name for p in c.projects] == ["ELSA", "CoEvolution", "Sec4AI4Sec"]
-    assert c.projects[1].terms == ["CoEvolution", "Co-Evolution"]
+    assert [p.name for p in c.projects] == ["AURORA", "CoDesign", "Data4AI4Data"]
+    assert c.projects[1].terms == ["CoDesign", "Co-Design"]
     assert c.sources == ["iris", "arxiv"] and c.cache_dir == "cache"
 
 
@@ -36,12 +36,12 @@ def test_example_config_loads(tmp_path):
     from triage.config import effective_rate_limits
     lim = effective_rate_limits(c)
     assert c.rate_limits == {} and lim["export.arxiv.org"] == 3.0 and lim["arxiv.org"] == 15.0
-    assert c.paper_list.source == "orcid" and c.sources == ["arxiv"]  # no iris.url in the example
+    assert c.paper_list.source == "orcid" and c.sources == ["iris", "arxiv"] and c.contact_email is None
     with pytest.raises(ConfigError, match="needs user.orcid"):
         load_config("config/triage.example.yaml")
 
 
-@pytest.mark.parametrize("missing", ["contact_email", "projects"])
+@pytest.mark.parametrize("missing", ["projects"])
 def test_missing_required(tmp_path, missing):
     text = "\n".join(l for l in VALID.splitlines() if not l.startswith(missing))
     if missing == "projects":
@@ -61,10 +61,13 @@ def test_malformed_projects(tmp_path, projects):
 def test_unknown_source_and_missing_iris(tmp_path):
     with pytest.raises(ConfigError, match="unknown sources"):
         load_config(write(tmp_path, VALID + "sources: [google_scholar]\n"))
-    no_iris = VALID.replace('iris: {oai_url: "https://iris.example/oai"}', "")
-    assert load_config(write(tmp_path, no_iris)).sources == ["arxiv"]  # IRIS only when an address is set
+    default_iris = VALID.replace('iris: {oai_url: "https://iris.example/oai"}', "")
+    c = load_config(write(tmp_path, default_iris))
+    assert c.sources == ["iris", "arxiv"] and c.iris.url == "https://iris.unica.it"  # default IRIS
+    off = VALID.replace('iris: {oai_url: "https://iris.example/oai"}', "iris: {url: null}")
+    assert load_config(write(tmp_path, off)).sources == ["arxiv"]  # IRIS switched off
     with pytest.raises(ConfigError, match="iris.url"):
-        load_config(write(tmp_path, no_iris + "sources: [iris, arxiv]\n"))
+        load_config(write(tmp_path, off + "sources: [iris, arxiv]\n"))
 
 
 def test_missing_file(tmp_path):
@@ -79,9 +82,9 @@ def test_dashboard_defaults(tmp_path):
 
 
 def test_dashboard_custom_and_unknown_column(tmp_path):
-    c = load_config(write(tmp_path, VALID + "dashboard: {port: 9000, columns: [title, ack_ELSA, doi], "
+    c = load_config(write(tmp_path, VALID + "dashboard: {port: 9000, columns: [title, ack_AURORA, doi], "
                                             "default_filters: {iris: missing}}\n"))
-    assert c.dashboard.port == 9000 and c.dashboard.columns == ["title", "ack_ELSA", "doi"]
+    assert c.dashboard.port == 9000 and c.dashboard.columns == ["title", "ack_AURORA", "doi"]
     assert c.dashboard.default_filters == {"iris": "missing"}
     with pytest.raises(ConfigError, match=r"unknown dashboard.columns \['bogus'\].*valid"):
         load_config(write(tmp_path, VALID + "dashboard: {columns: [title, bogus]}\n"))
@@ -156,7 +159,7 @@ def test_paper_list_config(tmp_path):
 def test_new_user_minimal_config_and_defaults(tmp_path):
     from triage.config import config_to_dict, effective_rate_limits, save_config
     text = ("user: {name: Ada Lovelace, orcid: 0000-0002-1825-0097, email: ada@uni.example}\n"
-            "iris: {url: https://iris.uni.example}\nprojects: [ELSA]\n")
+            "iris: {url: https://iris.uni.example}\nprojects: [AURORA]\n")
     c = load_config(write(tmp_path, text))
     assert c.contact_email == "ada@uni.example" and c.sources == ["iris", "arxiv"]
     assert c.iris.endpoint == "https://iris.uni.example/oai/request" and c.paper_list.source == "orcid"
@@ -188,3 +191,20 @@ def test_minimal_save_drops_default_delays(tmp_path):
     from triage.config import config_to_dict
     c = load_config(write(tmp_path, VALID + "rate_limits: {export.arxiv.org: 3.0, api.crossref.org: 1.5}\n"))
     assert config_to_dict(c, minimal=True)["rate_limits"] == {"api.crossref.org": 1.5}
+
+
+def test_email_optional_unless_unpaywall(tmp_path):
+    no_email = VALID.replace("contact_email: a@b.org\n", "")
+    assert load_config(write(tmp_path, no_email)).contact_email is None
+    with pytest.raises(ConfigError, match="Unpaywall"):
+        load_config(write(tmp_path, no_email + "sources: [arxiv, unpaywall]\n"))
+    with pytest.raises(ConfigError, match="email address"):
+        load_config(write(tmp_path, no_email + "user: {email: nope}\n"))
+
+
+def test_iris_off_survives_minimal_save(tmp_path):
+    from triage.config import config_to_dict, save_config
+    path = write(tmp_path, VALID.replace('iris: {oai_url: "https://iris.example/oai"}', "iris: {url: null}"))
+    save_config(config_to_dict(load_config(path)), path)
+    c = load_config(path)
+    assert c.iris.url is None and c.sources == ["arxiv"]

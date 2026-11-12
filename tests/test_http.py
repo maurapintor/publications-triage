@@ -90,3 +90,8 @@ def test_robots_crawl_delay_respected(tmp_path):
     h.get("https://slow.example/a", use_cache=False)
     h.get("https://slow.example/b", use_cache=False)
     assert waits and max(waits) == pytest.approx(7.0)
+
+
+def test_user_agent_without_email(tmp_path):
+    assert HttpClient(None, {}, tmp_path).user_agent == "publications-triage/0.1"
+    assert HttpClient("a@b.org", {}, tmp_path).user_agent == "publications-triage/0.1 (mailto:a@b.org)"

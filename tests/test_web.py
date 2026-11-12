@@ -16,7 +16,7 @@ contact_email: t@e.org
 cache_dir: {d}/cache
 output_dir: {d}/out
 sources: [arxiv]
-projects: [ELSA, Sec4AI4Sec]
+projects: [AURORA, Data4AI4Data]
 """
 
 
@@ -25,11 +25,11 @@ def setup(tmp_path, projects):
     (tmp_path / "c.yaml").write_text(CONFIG.format(d=tmp_path))
     pdf = tmp_path / "cache" / "pdfs" / "a.pdf"
     pdf.parent.mkdir(parents=True)
-    pdf.write_bytes(make_pdf([["Acknowledgements", "Funded by ELSA."]]))
+    pdf.write_bytes(make_pdf([["Acknowledgements", "Funded by AURORA."]]))
     rec = PaperRecord(Paper("10.1/a", "Paper A", authors=["X, Y"], year="2024", doi="10.1/a"),
                       {"arxiv": SourceResult("arxiv", "present", url="https://arxiv.org/abs/1")},
                       pdf_path=pdf, pdf_source="arxiv",
-                      ack=AckResult("ok", {"ELSA": "ack"}, [AckRegion(1, "heading", "Funded by ELSA.")], {"ELSA": 1}),
+                      ack=AckResult("ok", {"AURORA": "ack"}, [AckRegion(1, "heading", "Funded by AURORA.")], {"AURORA": 1}),
                       ack_page_pdf=pdf)
     rec2 = PaperRecord(Paper("t-2", "Paper B"), {"arxiv": SourceResult("arxiv", "missing")})
     write_json([rec, rec2], ["arxiv"], projects[:2], tmp_path / "out")
@@ -49,7 +49,7 @@ def test_index_and_papers(setup):
     data = c.get("/api/papers").get_json()
     assert [r["id"] for r in data["records"]] == ["10.1/a", "t-2"]
     assert data["columns"] == ["title", "year", "iris", "arxiv", "rank", "acks"]
-    assert data["projects"] == ["ELSA", "Sec4AI4Sec"] and "ack_ELSA" in data["valid_columns"]
+    assert data["projects"] == ["AURORA", "Data4AI4Data"] and "ack_AURORA" in data["valid_columns"]
 
 
 def test_papers_empty_when_no_run(tmp_path):
@@ -131,12 +131,12 @@ def test_config_get_put(setup):
     _, c = client(setup)
     body = c.get("/api/config").get_json()
     cfg = body["config"]
-    assert cfg["projects"] == [{"name": "ELSA"}, {"name": "Sec4AI4Sec"}] and "arxiv" in body["valid_sources"]
-    cfg["projects"].append({"name": "CoEvolution", "aliases": ["Co-Evolution"]})
-    cfg["dashboard"]["columns"] = ["title", "ack_CoEvolution"]
+    assert cfg["projects"] == [{"name": "AURORA"}, {"name": "Data4AI4Data"}] and "arxiv" in body["valid_sources"]
+    cfg["projects"].append({"name": "CoDesign", "aliases": ["Co-Design"]})
+    cfg["dashboard"]["columns"] = ["title", "ack_CoDesign"]
     r = c.put("/api/config", json=cfg)
-    assert r.status_code == 200 and r.get_json()["config"]["projects"][-1]["name"] == "CoEvolution"
-    assert c.get("/api/papers").get_json()["columns"] == ["title", "ack_CoEvolution"]
+    assert r.status_code == 200 and r.get_json()["config"]["projects"][-1]["name"] == "CoDesign"
+    assert c.get("/api/papers").get_json()["columns"] == ["title", "ack_CoDesign"]
     before = (setup / "c.yaml").read_text()
     cfg["sources"] = ["bogus"]
     r = c.put("/api/config", json=cfg)

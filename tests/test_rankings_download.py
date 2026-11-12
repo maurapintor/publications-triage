@@ -11,7 +11,7 @@ input_path: p.json
 contact_email: t@e.org
 cache_dir: {d}/cache
 sources: [arxiv]
-projects: [ELSA]
+projects: [AURORA]
 rankings: {{core_source: ICORE2023, sjr_year: 2024}}
 """
 CORE_CSV = "".join(f'"{i}","Conference {i}","C{i}","ICORE2023","A","Yes","4603","No","4"\n' for i in range(60))

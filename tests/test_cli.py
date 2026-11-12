@@ -10,7 +10,7 @@ from triage.sources.arxiv import ArxivSource
 ATOM = """<feed xmlns="http://www.w3.org/2005/Atom"><entry><id>http://arxiv.org/abs/2101.00001v1</id>
 <title>Robust Learning of Things</title><author><name>Ada Lovelace</name></author></entry></feed>"""
 PDF = make_pdf([["Body text that is long enough to be considered readable text.", "Acknowledgements",
-                 "Supported by ELSA.", "References"]])
+                 "Supported by AURORA.", "References"]])
 
 
 @responses.activate
@@ -24,7 +24,7 @@ contact_email: t@e.org
 cache_dir: {tmp_path}/cache
 output_dir: {tmp_path}/out
 sources: [arxiv]
-projects: [ELSA, Sec4AI4Sec]
+projects: [AURORA, Data4AI4Data]
 """)
 
     def cb(request):
@@ -39,7 +39,7 @@ projects: [ELSA, Sec4AI4Sec]
     assert "arxiv: missing=1, present=1" in out and "papers with an acknowledged project: 1" in out
     [csv_path] = (tmp_path / "out").glob("triage_*.csv")
     text = csv_path.read_text(encoding="utf-8-sig")
-    assert "ack_ELSA" in text and ",Y," in text
+    assert "ack_AURORA" in text and ",Y," in text
 
 
 def test_cli_config_error(tmp_path, capsys):
@@ -58,7 +58,7 @@ contact_email: t@e.org
 cache_dir: {tmp_path}/cache
 output_dir: {tmp_path}/out
 sources: [arxiv]
-projects: [ELSA]
+projects: [AURORA]
 """)
     responses.add(responses.GET, "https://export.arxiv.org/api/query", body=ATOM)
     responses.add(responses.GET, "https://export.arxiv.org/pdf/2101.00001", body=PDF, content_type="application/pdf")
@@ -66,12 +66,12 @@ projects: [ELSA]
     assert main(["run", "--config", str(tmp_path / "c.yaml")], http=http, sources=[ArxivSource(http)]) == 0
     data = load_json(tmp_path / "out" / "latest.json")
     [rec] = data["records"]
-    assert rec["ack"]["acknowledged"] == ["ELSA"] and rec["ack"]["page"] == 1
+    assert rec["ack"]["acknowledged"] == ["AURORA"] and rec["ack"]["page"] == 1
     assert rec["ack_page_pdf"].endswith("10.1000_abc.1_p1.pdf")
 
 
 def test_serve_refuses_remote_and_starts(tmp_path, capsys):
-    (tmp_path / "c.yaml").write_text("input_path: p.json\ncontact_email: t@e.org\nsources: [arxiv]\nprojects: [ELSA]\n")
+    (tmp_path / "c.yaml").write_text("input_path: p.json\ncontact_email: t@e.org\nsources: [arxiv]\nprojects: [AURORA]\n")
     assert main(["serve", "--config", str(tmp_path / "c.yaml"), "--host", "0.0.0.0"]) == 2
     assert "refusing" in capsys.readouterr().err
     started = []

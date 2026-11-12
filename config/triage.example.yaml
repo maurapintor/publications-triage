@@ -6,13 +6,7 @@
 # REQUIRED
 # ============================================================================================
 user:
-  name: null                          # your name (display only), e.g. Ada Lovelace
   orcid: null                         # your ORCID iD, e.g. 0000-0002-1825-0097: your paper list is built from it
-  email: you@example.org              # your email: sent to the public APIs (arXiv, ORCID, Crossref) as contact
-
-iris:
-  url: null                           # your institution's IRIS address, e.g. https://iris.example.it
-                                      # (leave null if you have no IRIS: IRIS checks are then skipped)
 
 projects:                             # funding projects to look for in the acknowledgements
   - name: MYPROJECT                   # the project acronym as written in papers
@@ -22,6 +16,14 @@ projects:                             # funding projects to look for in the ackn
 # ============================================================================================
 # OPTIONAL (shown with their defaults; uncomment to change)
 # ============================================================================================
+# user:
+#   name: null                        # display only
+#   email: null                       # contact sent to arXiv/ORCID/Crossref (recommended by them, not
+#                                     # required); needed only for the Unpaywall source
+#
+# iris:
+#   url: https://iris.unica.it        # your institution's IRIS address; null = no IRIS checks
+#
 # paper_list:
 #   arxiv_author_id: null             # the id after arxiv.org/a/ on your arXiv author page, e.g. lovelace_a_1:
 #                                     # adds arXiv ids and arXiv-only preprints
@@ -30,7 +32,7 @@ projects:                             # funding projects to look for in the ackn
 #   source: orcid                     # orcid (build the list from your ORCID at every run) | file
 #   file: null                        # only for source: file (a publications.json you provide)
 #
-# sources: [iris, arxiv]              # default: [iris, arxiv] if iris.url is set, else [arxiv];
+# sources: [iris, arxiv]              # default ([arxiv] when iris.url is null);
 #                                     # also available: openalex, unpaywall (extra open-access PDF locations)
 #
 # rankings:

@@ -6,7 +6,7 @@ from triage.pipeline import run_pipeline
 from triage.sources.base import SourceResult
 
 PDF = make_pdf([["Body text that is long enough to be considered readable text."],
-                ["Acknowledgements", "Supported by ELSA.", "References"]])
+                ["Acknowledgements", "Supported by AURORA.", "References"]])
 
 
 class FakeSource:
@@ -27,7 +27,7 @@ def _config(tmp_path, projects):
 
 def test_ack_page_pdf_created(tmp_path, projects):
     [rec] = run_pipeline([Paper("p1", "T")], [FakeSource()], _config(tmp_path, projects), FakeHttp())
-    assert rec.ack.matches == {"ELSA": "ack"} and rec.ack.ack_page == 2
+    assert rec.ack.matches == {"AURORA": "ack"} and rec.ack.ack_page == 2
     assert rec.ack_page_pdf and rec.ack_page_pdf.exists() and rec.ack_page_pdf.name == "p1_p2.pdf"
 
 

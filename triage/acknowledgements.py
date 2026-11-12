@@ -76,7 +76,7 @@ def _term_regex(term: str) -> re.Pattern:
 
 
 def _dehyphenate(text: str) -> str:
-    # Re-join words hyphenated across line breaks ("Sec4AI4-\nSec" -> "Sec4AI4Sec").
+    # Re-join words hyphenated across line breaks ("Data4AI4-\nData" -> "Data4AI4Data").
     return re.sub(r"(\w)-[ \t]*\n[ \t]*(\w)", r"\1\2", text)
 
 

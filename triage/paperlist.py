@@ -167,7 +167,7 @@ def fetch_orcid_detail(http, orcid: str, put_code) -> dict | None:
 
 
 def fetch_crossref(http, doi: str, email: str) -> dict | None:
-    r = http.get(f"{CROSSREF_API}/{quote(doi, safe='')}", params={"mailto": email})
+    r = http.get(f"{CROSSREF_API}/{quote(doi, safe='')}", params={"mailto": email} if email else None)
     if r.status_code != 200:
         return None
     try:

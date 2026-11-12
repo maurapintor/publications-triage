@@ -140,13 +140,13 @@
             <label>ORCID iD <span class="req">required</span>
               <input name="user.orcid" placeholder="0000-0000-0000-0000">
               <span class="hint">From <a href="https://orcid.org" target="_blank" rel="noopener">orcid.org</a>; your works and their IRIS links are read from it.</span></label>
-            <label>Email <span class="req">required</span>
+            <label>Email (optional)
               <input name="user.email" type="email" placeholder="you@university.edu">
-              <span class="hint">Sent to the public APIs (arXiv, ORCID, Crossref) so they can contact you; nothing else.</span>
-              <span id="email-warn" class="hint err" hidden>This is still the example address: please put your own.</span></label>
+              <span class="hint">Sent as contact to arXiv, ORCID and Crossref, which recommend it for scripts; needed only for the Unpaywall source.</span>
+              <span id="email-warn" class="hint err" hidden>This is an example address: put your own or leave it empty.</span></label>
             <label>Institutional repository (IRIS) address
-              <input name="iris.url" placeholder="https://iris.example.it">
-              <span class="hint">The address of your university's IRIS. Leave empty if you have none: IRIS checks are then skipped.</span></label>
+              <input name="iris.url" placeholder="empty = no IRIS checks">
+              <span class="hint">Default: https://iris.unica.it. Change it to your university's IRIS, or empty it to skip IRIS checks.</span></label>
           </fieldset>
 
           <fieldset id="s-projects" class="card"><legend>Projects</legend>
