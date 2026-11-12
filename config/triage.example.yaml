@@ -1,0 +1,76 @@
+# publications-triage settings.
+# Copy to config/triage.yaml, fill in the REQUIRED part, start the dashboard. Everything else can also be
+# changed later from the dashboard's Settings tab (which saves only what differs from the defaults).
+
+# ============================================================================================
+# REQUIRED
+# ============================================================================================
+user:
+  name: null                          # your name (display only), e.g. Ada Lovelace
+  orcid: null                         # your ORCID iD, e.g. 0000-0002-1825-0097: your paper list is built from it
+  email: you@example.org              # your email: sent to the public APIs (arXiv, ORCID, Crossref) as contact
+
+iris:
+  url: null                           # your institution's IRIS address, e.g. https://iris.example.it
+                                      # (leave null if you have no IRIS: IRIS checks are then skipped)
+
+projects:                             # funding projects to look for in the acknowledgements
+  - name: MYPROJECT                   # the project acronym as written in papers
+  - name: OtherProject
+    aliases: [Other-Project]          # optional spelling variants
+
+# ============================================================================================
+# OPTIONAL (shown with their defaults; uncomment to change)
+# ============================================================================================
+# paper_list:
+#   arxiv_author_id: null             # the id after arxiv.org/a/ on your arXiv author page, e.g. lovelace_a_1:
+#                                     # adds arXiv ids and arXiv-only preprints
+#   exclude_titles: []                # titles to skip; a line also drops every title containing it
+#                                     # (filled by "Exclude this paper" in the dashboard)
+#   source: orcid                     # orcid (build the list from your ORCID at every run) | file
+#   file: null                        # only for source: file (a publications.json you provide)
+#
+# sources: [iris, arxiv]              # default: [iris, arxiv] if iris.url is set, else [arxiv];
+#                                     # also available: openalex, unpaywall (extra open-access PDF locations)
+#
+# rankings:
+#   top_quartiles: [Q1]               # journal quartiles counted as "top" (SCImago, Computer Science)
+#   top_core: ["A*"]                  # CORE conference ranks counted as "top"
+#   venues: {}                        # manual ranks, e.g. {ICDAR: A, "Pattern Recognition": Q1}
+#   core_source: ICORE2026            # CORE edition for the download button
+#   sjr_area: "1700"                  # SCImago subject area (1700 = Computer Science)
+#   sjr_year: null                    # SCImago year (null = latest)
+#   sjr_categories: []                # empty = all Computer Science categories
+#   core_csv: null                    # null = cache/rankings/core.csv (Download button)
+#   sjr_csv: null                     # null = cache/rankings/sjr.csv (Upload button)
+#
+# dashboard:
+#   columns: [title, year, iris, arxiv, rank, acks]
+#   default_filters: {}               # e.g. {iris: missing}, {rank: top}, {ack_MYPROJECT: N}
+#
+# validations: {}                     # per-paper checks, written by the dashboard
+#
+# ============================================================================================
+# ADVANCED (change only if you know why)
+# ============================================================================================
+# iris:
+#   oai_url: null                     # OAI-PMH address (the repository's machine interface);
+#                                     # default: <iris.url>/oai/request
+#   mode: auto                        # auto | orcid (records linked from your ORCID, ~1 min) |
+#                                     # harvest (whole repository, ~2 h the first time)
+#   metadata_prefix: oai_dc
+#   set: null                         # OAI set, only for mode: harvest
+#   export_path: null                 # a manual IRIS export CSV instead of OAI-PMH
+#
+# pdf_priority: [arxiv, unpaywall, openalex, iris]   # order in which sources are tried for the PDF
+#
+# rate_limits: {}                     # overrides of the built-in delays (seconds between requests per server):
+#                                     #   export.arxiv.org 3, arxiv.org 15, <IRIS host> 5, pub.orcid.org 0.2,
+#                                     #   api.crossref.org 0.2, api.openalex.org 0.2, api.unpaywall.org 0.2,
+#                                     #   portal.core.edu.au 2, default 1. robots.txt Crawl-delay is always respected.
+#
+# cache_dir: cache
+# output_dir: output
+# dashboard:
+#   host: 127.0.0.1
+#   port: 8000

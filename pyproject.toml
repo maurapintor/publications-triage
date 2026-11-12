@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "publications-triage"
+version = "0.1.0"
+description = "Check where each published paper is available (IRIS, arXiv, ...) and which project acknowledgements it contains."
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "pyyaml",
+    "pypdf",
+    "fonttools",          # pypdf needs it to decode some embedded (CFF) fonts
+    "rapidfuzz",
+    "flask>=3",
+]
+
+[project.scripts]
+pubtriage = "triage.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest", "responses"]
+
+[tool.setuptools.packages.find]
+include = ["triage*"]
+
+[tool.setuptools.package-data]
+"triage.web" = ["templates/*.html", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

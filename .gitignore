@@ -1,0 +1,20 @@
+# --- personal data: stays local only ---
+# your settings (ORCID, email, projects, exclusions, validations) and their backups
+config/triage.yaml
+config/*.bak
+# downloaded PDFs, ack pages, IRIS/ORCID/Crossref responses, ranking lists
+cache/
+# results (CSV/JSON, your paper list)
+output/
+# local planning notes
+plans/
+todo.md
+plan.md
+
+# --- build / tooling ---
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+*.tmp
+.DS_Store

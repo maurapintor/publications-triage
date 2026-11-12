@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Publications Triage</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Publications Triage</h1>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="papers" aria-selected="true">Papers</button>
+      <button role="tab" data-tab="config" aria-selected="false">Settings</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Papers tab -->
+    <section id="tab-papers" class="tab">
+      <div class="runbar card">
+        <div class="runbar-row">
+          <button id="run-btn" class="primary">Re-run processing</button>
+          <button id="cancel-btn" class="danger" hidden>Cancel</button>
+          <details class="run-options">
+            <summary>Options</summary>
+            <label>Limit <input id="run-limit" type="number" min="1" placeholder="all"></label>
+            <span id="run-sources"></span>
+            <label title="Default: cached PDFs are reused and only papers without a PDF are looked up and downloaded again">
+              <input id="run-reload" type="checkbox"> Re-load all PDFs (re-check every paper)</label>
+            <label><input id="run-nodownload" type="checkbox"> Skip PDF download</label>
+            <span class="muted small">By default cached PDFs are reused; only papers without a PDF are retried.</span>
+          </details>
+          <span id="generated" class="muted"></span>
+        </div>
+        <div id="iris-index" class="muted small" hidden></div>
+        <div id="rank-info" class="muted small" hidden></div>
+        <div id="rank-dl" class="small" hidden>
+          <div class="row">
+            <b>CORE</b>
+            <button type="button" class="link" data-dl="core">Download list</button>
+            <span class="muted">or</span>
+            <label class="upload link">upload a CORE export<input type="file" accept=".csv,text/csv" data-up="core" hidden></label>
+          </div>
+          <div class="row">
+            <b>SCImago</b>
+            <a id="sjr-page" href="https://www.scimagojr.com/journalrank.php?area=1700" target="_blank" rel="noopener">1. open the SCImago ranking ↗</a>
+            <span class="muted">→ press <i>Download data</i> →</span>
+            <label class="upload link">2. upload the downloaded file<input type="file" accept=".csv,text/csv" data-up="sjr" hidden></label>
+            <span class="muted">(SCImago does not allow scripted downloads)</span>
+          </div>
+          <span id="rank-dl-msg" class="muted"></span>
+        </div>
+        <div id="run-status" hidden>
+          <div class="progress"><div id="progress-bar"></div></div>
+          <div id="run-text" class="muted"></div>
+          <details><summary class="muted">Log</summary><pre id="run-log"></pre></details>
+        </div>
+      </div>
+
+      <div id="summary" class="summary"></div>
+
+      <div class="filters card">
+        <input id="search" type="search" placeholder="Search title, authors, DOI, venue…">
+        <span id="source-filters"></span>
+        <label>Project
+          <select id="proj-filter"><option value="">any</option></select>
+        </label>
+        <select id="proj-mode" aria-label="Project match">
+          <option value="Y">acknowledged</option>
+          <option value="body">mentioned in body only</option>
+          <option value="N">not found</option>
+        </select>
+        <label>IRIS vs arXiv
+          <select id="cmp-filter"><option value="">any</option><option value="same">same</option>
+            <option value="differs">differs (to check)</option><option value="accepted">differs, checked</option>
+            <option value="na">not comparable</option></select>
+        </label>
+        <label>Rank
+          <select id="rank-filter"><option value="">any</option><option value="top">top (Q1 / A*)</option>
+            <option value="nottop">ranked, not top</option><option value="unknown">unknown / to check</option></select>
+        </label>
+        <label>PDF
+          <select id="pdf-filter"><option value="">any</option><option value="yes">yes</option><option value="no">no</option></select>
+        </label>
+        <details class="col-menu">
+          <summary>Columns</summary>
+          <div id="col-list"></div>
+          <button id="col-reset" class="link">Reset to config defaults</button>
+        </details>
+        <button id="filters-reset" class="link">Clear filters</button>
+        <span class="export">
+          <select id="export-format" aria-label="Export format"></select>
+          <button id="export-btn" title="Export the papers currently shown in the table">Export shown</button>
+        </span>
+        <span id="count" class="muted"></span>
+      </div>
+
+      <div class="table-wrap card">
+        <table id="papers">
+          <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="empty" class="muted" hidden>No results yet. Press <b>Re-run processing</b> to start.</p>
+      </div>
+    </section>
+
+    <!-- Config tab -->
+    <section id="tab-config" class="tab" hidden>
+      <div class="settings">
+        <nav class="settings-nav" aria-label="Settings sections">
+          <div class="nav-group">Required</div>
+          <a href="#s-profile">Profile</a>
+          <a href="#s-projects">Projects</a>
+          <div class="nav-group">Optional</div>
+          <a href="#s-papers">Paper list</a>
+          <a href="#s-sources">Sources</a>
+          <a href="#s-rankings">Rankings</a>
+          <a href="#s-dashboard">Dashboard</a>
+          <div class="nav-group">Advanced</div>
+          <a href="#s-iris-adv">IRIS details</a>
+          <a href="#s-pdfs">PDFs</a>
+          <a href="#s-delays">Request delays</a>
+          <a href="#s-storage">Storage &amp; server</a>
+          <div class="nav-save">
+            <button type="submit" form="config-form" class="primary">Save settings</button>
+            <button type="button" id="cfg-reload" class="link">Discard changes</button>
+            <div id="cfg-msg" role="status"></div>
+          </div>
+        </nav>
+
+        <form id="config-form" class="config">
+          <p class="muted small">Editing <code id="cfg-path"></code>. Only values that differ from the defaults are
+            saved; the previous file is kept as <code>.bak</code>. Changes apply to the next run.</p>
+
+          <h2 class="group-title">Required</h2>
+          <fieldset id="s-profile" class="card"><legend>Profile</legend>
+            <p class="hint">Who you are. Your paper list is built from your ORCID record at every run.</p>
+            <label>Name <input name="user.name" placeholder="e.g. Ada Lovelace"></label>
+            <label>ORCID iD <span class="req">required</span>
+              <input name="user.orcid" placeholder="0000-0000-0000-0000">
+              <span class="hint">From <a href="https://orcid.org" target="_blank" rel="noopener">orcid.org</a>; your works and their IRIS links are read from it.</span></label>
+            <label>Email <span class="req">required</span>
+              <input name="user.email" type="email" placeholder="you@university.edu">
+              <span class="hint">Sent to the public APIs (arXiv, ORCID, Crossref) so they can contact you; nothing else.</span>
+              <span id="email-warn" class="hint err" hidden>This is still the example address: please put your own.</span></label>
+            <label>Institutional repository (IRIS) address
+              <input name="iris.url" placeholder="https://iris.example.it">
+              <span class="hint">The address of your university's IRIS. Leave empty if you have none: IRIS checks are then skipped.</span></label>
+          </fieldset>
+
+          <fieldset id="s-projects" class="card"><legend>Projects</legend>
+            <p class="hint">Funding projects to look for in the acknowledgements of each PDF. Add spelling variants as aliases.</p>
+            <div id="cfg-projects"></div>
+            <button type="button" id="add-project" class="link">+ Add project</button>
+          </fieldset>
+
+          <h2 class="group-title">Optional <span class="muted small">(defaults work for most people)</span></h2>
+          <fieldset id="s-papers" class="card"><legend>Paper list</legend>
+            <label>arXiv author id
+              <input name="paper_list.arxiv_author_id" placeholder="e.g. lovelace_a_1">
+              <span class="hint">The part after <code>arxiv.org/a/</code> on your arXiv author page. Adds arXiv ids and preprints that are not on ORCID.</span></label>
+            <label>Excluded papers (one title per line)
+              <textarea name="paper_list.exclude_titles" rows="5"></textarea>
+              <span class="hint">Use <i>Exclude this paper</i> in a paper's details to add it here. Delete a line to bring the
+                paper back (it reappears after the next run). A line also excludes every title that contains it,
+                e.g. <code>AISec</code> drops "AISec '25: …" workshop entries.</span></label>
+            <label>Where the list comes from
+              <select name="paper_list.source">
+                <option value="orcid">My ORCID record (default)</option>
+                <option value="file">A file I provide</option>
+              </select></label>
+            <label>File (only when the list comes from a file) <input name="paper_list.file" placeholder="data/publications.json"></label>
+          </fieldset>
+
+          <fieldset id="s-sources" class="card"><legend>Sources</legend>
+            <p class="hint">Where each paper is looked for. PDFs are taken only from open-access copies.</p>
+            <div id="cfg-sources" class="checks column"></div>
+          </fieldset>
+
+          <fieldset id="s-rankings" class="card"><legend>Rankings (journal quartile, CORE conference rank)</legend>
+            <p class="hint">Get the lists from the Papers tab (rankings line): CORE can be downloaded by the tool; SCImago
+              must be downloaded in your browser (<a href="https://www.scimagojr.com/journalrank.php?area=1700" target="_blank" rel="noopener">scimagojr.com</a>
+              → <i>Download data</i>) and uploaded.</p>
+            <div class="row">
+              <label>"Top" journal quartiles <input name="rankings.top_quartiles" placeholder="Q1"></label>
+              <label>"Top" CORE ranks <input name="rankings.top_core" placeholder="A*"></label>
+            </div>
+            <label>Manual venue ranks, when the lists are wrong or miss a venue (one <code>venue or acronym: rank</code> per line)
+              <textarea name="rankings.venues" rows="3" placeholder="ICDAR: A&#10;Pattern Recognition: Q1"></textarea></label>
+            <details class="adv"><summary>More ranking options</summary>
+              <div class="row">
+                <label>CORE edition <input name="rankings.core_source" placeholder="ICORE2026"></label>
+                <label>SCImago area code <input name="rankings.sjr_area" placeholder="1700"></label>
+                <label>SCImago year <input name="rankings.sjr_year" placeholder="latest"></label>
+              </div>
+              <label>SCImago categories that count (one per line; empty = all Computer Science categories)
+                <textarea name="rankings.sjr_categories" rows="4"></textarea></label>
+              <label>CORE CSV path (empty = the downloaded one) <input name="rankings.core_csv" placeholder="cache/rankings/core.csv"></label>
+              <label>SCImago CSV path (empty = the uploaded one) <input name="rankings.sjr_csv" placeholder="cache/rankings/sjr.csv"></label>
+            </details>
+            <p class="hint" id="cfg-validations"></p>
+          </fieldset>
+
+          <fieldset id="s-dashboard" class="card"><legend>Dashboard</legend>
+            <label>Table columns (comma-separated) <input name="dashboard.columns"></label>
+            <p class="hint">Available: <span id="cfg-valid-cols"></span></p>
+            <label>Filters applied when the page opens (one <code>key: value</code> per line, e.g. <code>iris: missing</code>, <code>rank: top</code>)
+              <textarea name="dashboard.default_filters" rows="2"></textarea></label>
+          </fieldset>
+
+          <h2 class="group-title">Advanced <span class="muted small">(change only if you know why)</span></h2>
+          <fieldset id="s-iris-adv" class="card"><legend>IRIS details</legend>
+            <p class="hint">IRIS is read through <b>OAI-PMH</b>, the standard interface that institutional repositories
+              offer to programs (instead of web pages). Its address is normally your IRIS address + <code>/oai/request</code>;
+              you only need to change it if your repository uses a different one.</p>
+            <label>OAI-PMH address <input name="iris.oai_url" id="cfg-oai" placeholder=""></label>
+            <label>How your IRIS records are found
+              <select name="iris.mode">
+                <option value="auto">Automatic (via ORCID when an ORCID iD is set)</option>
+                <option value="orcid">Via ORCID: only records linked from your ORCID (fast, ~1 min)</option>
+                <option value="harvest">Whole repository: download every IRIS record (~2 h the first time)</option>
+              </select></label>
+            <div class="row">
+              <label>Metadata format <input name="iris.metadata_prefix" placeholder="oai_dc"></label>
+              <label>OAI set (harvest only) <input name="iris.set"></label>
+            </div>
+            <label>Manual IRIS export CSV, instead of OAI-PMH <input name="iris.export_path"></label>
+          </fieldset>
+
+          <fieldset id="s-pdfs" class="card"><legend>PDFs</legend>
+            <label>Order in which sources are tried for the PDF (comma-separated)
+              <input name="pdf_priority" placeholder="arxiv, unpaywall, openalex, iris"></label>
+          </fieldset>
+
+          <fieldset id="s-delays" class="card"><legend>Request delays</legend>
+            <p class="hint">Minimum seconds between two requests to the same server, to respect each site's rules. The
+              defaults follow the sites' terms; a site's robots.txt <code>Crawl-delay</code> is always respected on top.
+              Leave a field empty to keep the default.</p>
+            <table class="mini delays"><thead><tr><th>Server</th><th>Used for</th><th>Default</th><th>Override</th></tr></thead>
+              <tbody id="cfg-delays"></tbody></table>
+          </fieldset>
+
+          <fieldset id="s-storage" class="card"><legend>Storage &amp; server</legend>
+            <div class="row">
+              <label>Cache folder <input name="cache_dir" placeholder="cache"></label>
+              <label>Output folder <input name="output_dir" placeholder="output"></label>
+            </div>
+            <div class="row">
+              <label>Dashboard host <input name="dashboard.host" placeholder="127.0.0.1"></label>
+              <label>Dashboard port <input name="dashboard.port" type="number" min="1" max="65535" placeholder="8000"></label>
+            </div>
+            <p class="hint">Host/port take effect after restarting the server.</p>
+          </fieldset>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- Detail panel -->
+  <div id="overlay" hidden></div>
+  <aside id="detail" hidden aria-label="Paper details">
+    <button id="detail-close" class="close" aria-label="Close">×</button>
+    <div id="detail-body"></div>
+  </aside>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

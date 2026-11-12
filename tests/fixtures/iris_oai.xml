@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <ListRecords>
+    <record><header><identifier>oai:iris:1</identifier></header><metadata><oai_dc:dc>
+      <dc:title>Robust Learning of Things</dc:title>
+      <dc:creator>Lovelace, Ada</dc:creator>
+      <dc:identifier>https://hdl.handle.net/11584/1</dc:identifier>
+      <dc:identifier>https://iris.example.it/retrieve/1/paper.pdf</dc:identifier>
+      <dc:relation>https://doi.org/10.1000/ABC.1</dc:relation>
+      <dc:rights>info:eu-repo/semantics/openAccess</dc:rights>
+      <dc:format>application/pdf</dc:format>
+    </oai_dc:dc></metadata></record>
+    <record><header><identifier>oai:iris:2</identifier></header><metadata><oai_dc:dc>
+      <dc:title>Another Study on Pruning</dc:title>
+      <dc:creator>Turing, Alan</dc:creator>
+      <dc:identifier>https://hdl.handle.net/11584/2</dc:identifier>
+      <dc:rights>info:eu-repo/semantics/closedAccess</dc:rights>
+    </oai_dc:dc></metadata></record>
+    <record><header status="deleted"><identifier>oai:iris:3</identifier></header></record>
+    <resumptionToken>TOKEN2</resumptionToken>
+  </ListRecords>
+</OAI-PMH>

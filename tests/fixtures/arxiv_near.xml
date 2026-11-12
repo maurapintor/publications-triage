@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>http://arxiv.org/abs/2202.00002v1</id>
+    <title>Robust Learning of Thing</title>
+    <author><name>Someone Else</name></author>
+  </entry>
+</feed>

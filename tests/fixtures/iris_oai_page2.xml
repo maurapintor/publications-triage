@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <ListRecords>
+    <record><header><identifier>oai:iris:4</identifier></header><metadata><oai_dc:dc>
+      <dc:title>Page Two Paper</dc:title>
+      <dc:creator>Hopper, Grace</dc:creator>
+      <dc:identifier>https://hdl.handle.net/11584/4</dc:identifier>
+    </oai_dc:dc></metadata></record>
+    <resumptionToken/>
+  </ListRecords>
+</OAI-PMH>

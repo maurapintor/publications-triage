@@ -1,0 +1,11 @@
+services:
+  pubtriage:
+    build: .
+    image: publications-triage
+    ports:
+      - "127.0.0.1:8000:8000"   # loopback only: the dashboard has no authentication
+    volumes:
+      - ./config:/app/config          # triage.yaml (edited from the Config tab, .bak kept here)
+      - ./cache:/app/cache            # HTTP cache, PDFs, ack pages
+      - ./output:/app/output          # CSV / JSON results
+    restart: unless-stopped
