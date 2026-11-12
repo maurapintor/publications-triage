@@ -44,6 +44,11 @@ The ones you are most likely to change:
 
 `config/triage.yaml`, `cache/` and `output/` are personal and git-ignored.
 
+**IRIS cover page**: *Download IRIS cover page* in a paper's details makes the front page to put before the
+accepted manuscript when depositing it (reference from the IRIS record, DOI, license). Put the institution's
+`logo.png`, `header.png` and `fonts/calibri*.ttf` in `config/cover/` (local, not in the repository); without them
+a plain font and no images are used.
+
 ## Command line
 
 ```bash

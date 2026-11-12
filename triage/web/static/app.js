@@ -375,6 +375,10 @@
         <summary>Acknowledgements page (page ${page})</summary></details>` : ""}
       ${r.pdf_path ? `<details class="pdfbox" data-src="${fileUrl("pdf", r.id)}${page ? `#page=${page}` : ""}" data-cls="full">
         <summary>Full PDF${r.pdf_cached ? ' <span class="muted small">(cached)</span>' : ""}</summary></details>` : ""}
+      <h3>IRIS cover page</h3>
+      <p class="muted small">Front page to put before the accepted manuscript when depositing it on IRIS
+        (reference, DOI, license), filled from ${r.sources && r.sources.iris && ["present", "uncertain"].includes(r.sources.iris.status) ? "the IRIS record" : "the ORCID/Crossref metadata"}.</p>
+      <a class="button" href="${fileUrl("cover", r.id)}" download>Download IRIS cover page</a>
       <h3>Exclude</h3>
       <p class="muted small">Not your paper, or not something to track (e.g. a workshop proceedings or a project page)?</p>
       <button type="button" id="exclude-btn" class="danger">Exclude this paper</button>
@@ -538,6 +542,7 @@
     setVal("rankings.core_csv", rk.core_csv); setVal("rankings.sjr_csv", rk.sjr_csv);
     const nval = Object.keys(c.validations || {}).length;
     $("#cfg-validations").textContent = `Per-paper checks: ${nval} (set them in a paper's details: "Mark difference as checked", "Set rank by hand").`;
+    for (const k of ["version_text", "license_text", "repository_name", "assets_dir"]) setVal("cover." + k, (c.cover || {})[k]);
     setVal("dashboard.columns", c.dashboard.columns.join(", "));
     setVal("dashboard.default_filters", lines(c.dashboard.default_filters));
     $("#cfg-valid-cols").textContent = cfgMeta.valid_columns.join(", ");
@@ -580,6 +585,8 @@
           core_csv: nul(el["rankings.core_csv"].value), sjr_csv: nul(el["rankings.sjr_csv"].value) },
         dashboard: { host: el["dashboard.host"].value.trim() || "127.0.0.1", port: Number(el["dashboard.port"].value) || 8000,
           columns: csv(el["dashboard.columns"].value), default_filters: parseLines(el["dashboard.default_filters"].value, false) },
+        cover: { version_text: el["cover.version_text"].value.trim(), license_text: el["cover.license_text"].value.trim(),
+          repository_name: el["cover.repository_name"].value.trim(), assets_dir: el["cover.assets_dir"].value.trim() },
         pdf_priority: csv(el.pdf_priority.value),
         rate_limits: rate,
         cache_dir: el.cache_dir.value.trim() || "cache", output_dir: el.output_dir.value.trim() || "output",

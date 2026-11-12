@@ -221,6 +221,16 @@ def create_app(config_path, run_fn=None, http_factory=None) -> Flask:
     def pdf(pid):
         return send_record_file(record(pid).get("pdf_path"))
 
+    @app.get("/cover/<path:pid>")
+    def cover(pid):
+        """Front page for the IRIS version of a paper (PDF download)."""
+        from ..cover import cover_fields, render_cover
+        from ..papers import safe_filename
+        c = config()
+        pdf = render_cover(cover_fields(record(pid)), c.cover, c.iris.url)
+        return Response(pdf, content_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="cover_{safe_filename(pid)}.pdf"'})
+
     @app.get("/ackpage/<path:pid>")
     def ackpage(pid):
         return send_record_file(record(pid).get("ack_page_pdf"))

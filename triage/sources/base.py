@@ -18,3 +18,4 @@ class SourceResult:
     open_access: bool | None = None
     title: str | None = None  # title / authors of the matched entry (for cross-source comparison)
     authors: list[str] | None = None
+    meta: dict | None = None  # source-specific bibliographic details (IRIS: volume, pages, journal, year)

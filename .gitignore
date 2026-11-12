@@ -2,6 +2,8 @@
 # your settings (ORCID, email, projects, exclusions, validations) and their backups
 config/triage.yaml
 config/*.bak
+# institution assets for the IRIS cover (logo, header, fonts: branding / font licenses)
+config/cover/
 # downloaded PDFs, ack pages, IRIS/ORCID/Crossref responses, ranking lists
 cache/
 # results (CSV/JSON, your paper list)

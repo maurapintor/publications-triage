@@ -33,6 +33,26 @@ class IrisRecord:
     access: str | None = None  # open | embargoed | closed | None (unknown)
     fulltext: bool | None = None
     oai_id: str | None = None
+    meta: dict = field(default_factory=dict)  # year, journal, ispartofbook, volume, issue, firstpage, lastpage, ...
+
+
+_META_KEYS = ("journal", "ispartofbook", "volume", "issue", "firstpage", "lastpage", "serie", "numberofpages")
+
+
+def _meta(vals) -> dict:
+    """IRIS puts bibliographic details in dc:relation as 'key:value' (e.g. 'volume:654')."""
+    meta = {}
+    for rel in vals("relation"):
+        key, sep, value = rel.partition(":")
+        if sep and key in _META_KEYS and value.strip() and key not in meta:
+            meta[key] = value.strip()
+    years = [d[:4] for d in vals("date") if d[:4].isdigit()]
+    if years:
+        meta["year"] = years[0]
+    publisher = vals("publisher")
+    if publisher:
+        meta["publisher"] = publisher[0]
+    return meta
 
 
 def _access_from_rights(rights: list[str]) -> str | None:
@@ -103,6 +123,7 @@ def parse_oai_page_full(xml_text: str) -> OaiPage:
                 access=access,
                 fulltext=True if (pdf or "pdf" in formats) else None,
                 oai_id=oai_id or None,
+                meta=_meta(vals),
             )
         )
     tok_el = root.find(f"{OAI}ListRecords/{OAI}resumptionToken")
@@ -374,7 +395,7 @@ class IrisSource:
             source="iris", status=status, match_id=rec.url, url=rec.url, pdf_url=open_pdf,
             score=score, evidence=evidence, fulltext=rec.fulltext,
             open_access={"open": True, "embargoed": False, "closed": False}.get(rec.access),
-            title=rec.title, authors=list(rec.authors),
+            title=rec.title, authors=list(rec.authors), meta=dict(rec.meta) or None,
         )
 
     def pdf_urls(self, result: SourceResult) -> list[str]:

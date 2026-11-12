@@ -183,3 +183,6 @@ input.invalid { border-color: var(--missing); }
 .setup input { display: block; width: 100%; margin-top: 4px; font-weight: normal; }
 .setup .row input { flex: 1; }
 .setup .proj-row { margin-top: 6px; }
+a.button { display: inline-block; text-decoration: none; border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 12px; color: var(--fg); background: var(--card); }
+a.button:hover { background: var(--row-hover); }

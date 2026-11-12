@@ -137,6 +137,16 @@ VALIDATION_KEYS = ("iris_vs_arxiv", "rank", "note")
 
 
 @dataclass
+class CoverConfig:
+    """Front page for the version deposited on IRIS (layout of unica-automations/unica_iris)."""
+    assets_dir: str = "config/cover"  # logo.png, header.png, fonts/*.ttf (local, git-ignored)
+    version_text: str = "This is the Author's <i>accepted</i> manuscript version of the following contribution:"
+    license_text: str = ("This manuscript version is made available under the CC-BY-NC-ND 4.0 license "
+                         "https://creativecommons.org/licenses/by-nc-nd/4.0/")
+    repository_name: str = "UNICA IRIS"
+
+
+@dataclass
 class DashboardConfig:
     host: str = "127.0.0.1"
     port: int = 8000
@@ -161,6 +171,7 @@ class Config:
     user: UserConfig = field(default_factory=UserConfig)
     paper_list: PaperListConfig = field(default_factory=PaperListConfig)
     rankings: RankingsConfig = field(default_factory=RankingsConfig)
+    cover: CoverConfig = field(default_factory=CoverConfig)
     validations: dict[str, dict] = field(default_factory=dict)  # paper id -> {iris_vs_arxiv, rank, note}
     dashboard: DashboardConfig = field(default_factory=DashboardConfig)
 
@@ -259,6 +270,17 @@ def _parse_rankings(raw) -> RankingsConfig:
             raise ConfigError(f"rankings.venues[{k!r}] = {v!r}: valid ranks are {list(VALID_RANKS)}")
     r.venues = {str(k): str(v) for k, v in venues.items()}
     return r
+
+
+def _parse_cover(raw) -> CoverConfig:
+    raw = raw or {}
+    if not isinstance(raw, dict):
+        raise ConfigError("'cover' must be a mapping")
+    d = CoverConfig()
+    for k in ("assets_dir", "version_text", "license_text", "repository_name"):
+        if raw.get(k) not in (None, ""):
+            setattr(d, k, str(raw[k]))
+    return d
 
 
 def _parse_validations(raw) -> dict[str, dict]:
@@ -383,6 +405,7 @@ def load_config(path: str | Path) -> Config:
         user=user,
         paper_list=paper_list,
         rankings=_parse_rankings(data.get("rankings")),
+        cover=_parse_cover(data.get("cover")),
         validations=_parse_validations(data.get("validations")),
         dashboard=_parse_dashboard(data.get("dashboard"), projects),
     )
@@ -439,6 +462,7 @@ def config_to_dict(config: Config, minimal: bool = False) -> dict:
         "iris": d["iris"],
         "projects": [{"name": p.name, **({"aliases": p.aliases} if p.aliases else {})} for p in config.projects],
         "rankings": d["rankings"],
+        "cover": d["cover"],
         "dashboard": d["dashboard"],
         "pdf_priority": d["pdf_priority"],
         "rate_limits": d["rate_limits"],
@@ -452,7 +476,7 @@ def config_to_dict(config: Config, minimal: bool = False) -> dict:
     ref = {
         "paper_list": asdict(PaperListConfig()), "iris": asdict(IrisConfig()),
         "rankings": {**asdict(RankingsConfig()), "sjr_categories": list(CS_CATEGORIES)},
-        "dashboard": asdict(DashboardConfig()), "pdf_priority": list(DEFAULT_PDF_PRIORITY), "rate_limits": {},
+        "dashboard": asdict(DashboardConfig()), "cover": asdict(CoverConfig()), "pdf_priority": list(DEFAULT_PDF_PRIORITY), "rate_limits": {},
         "cache_dir": "cache", "output_dir": "output", "validations": {},
         "sources": ["iris", "arxiv"] if (config.iris.url or config.iris.oai_url or config.iris.export_path) else ["arxiv"],
     }

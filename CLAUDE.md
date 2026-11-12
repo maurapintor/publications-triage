@@ -26,6 +26,8 @@ node --check triage/web/static/app.js         # syntax check after editing the f
 - `triage/acknowledgements.py` + `ackpage.py`: ack section/footnote detection per page, one-page PDF.
 - `triage/compare.py`: IRIS vs arXiv (word diff of titles, aligned author rows; case/punctuation/LaTeX ignored).
 - `triage/rankings.py` + `rankings_download.py`: SJR/CORE CSV parsing and matching; CORE download, SJR import.
+- `triage/cover.py`: IRIS cover page (reportlab) from the IRIS record's metadata; assets in `config/cover/`
+  (institution logo/header and Calibri: local only, never commit them).
 - `triage/enrich.py`: fields recomputed on every dashboard request (comparison, ranking, validations), so
   config edits apply without a re-run.
 - `triage/config.py`: dataclasses, validation, defaults (`DEFAULT_RATE_LIMITS`, `DEFAULT_IRIS_URL`),
@@ -41,8 +43,8 @@ node --check triage/web/static/app.js         # syntax check after editing the f
   robots.txt, respect delays. Never work around a block: SCImago forbids scripted CSV downloads, so its
   file is uploaded by the user; CORE and SCImago also disallow AI agents, so don't fetch them yourself
   while developing (test with mocks). If a new source needs scraping or has unclear terms, ask first.
-- **No personal data in the repository.** `config/triage.yaml`, `config/*.bak`, `cache/`, `output/`,
-  `plans/` are git-ignored and stay local. Examples and tests use neutral data (ORCID sample iD
+- **No personal data in the repository.** `config/triage.yaml`, `config/*.bak`, `config/cover/`, `cache/`,
+  `output/`, `plans/` are git-ignored and stay local. Examples and tests use neutral data (ORCID sample iD
   `0000-0002-1825-0097`, fictional names, made-up project names). Before committing, grep the staged
   files for real names, ORCID iDs, emails.
 - **Tests never hit the network**: use `responses` or fakes. `tests/conftest.py::make_pdf` builds small PDFs.
